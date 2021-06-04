@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <title>Document</title>
+</head>
+<body>
+<div class="container" id="container"></div>
+<div class="container">
+    <div class="row">
+        <div class="col-6">
+            <button onClick="handleButtonPressed();">Select</button>
+        </div>
+        <div class="col-6">
+            <button onClick="handleSaveCropImage();" id="calc" disabled="true">Calculate</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    const screenWidth = window.innerWidth-50;
+    const screenHeight = window.innerHeight-50;
+
+    var cont = document.getElementById("container");
+    cont.insertAdjacentHTML('afterbegin', `<canvas id="drawingCanvas" width=${screenWidth} height=${screenHeight}></canvas>`);
+
+    const canvas = document.getElementById("drawingCanvas");
+    const ctx = canvas.getContext("2d");
+
+    var calcButton = document.getElementById("calc");
+
+    var buttonPressed = false;
+    var canCalculate = false;
+    var isDrawing = false;
+
+    var img = new Image();
+
+    img.onload = function() {
+        ctx.drawImage(img, 0, 0, screenWidth, screenHeight);
+    };
+
+    img.src = "static/images/{{ image }}";
+
+    var touchStart = null;
+    var touchPosition = null;
+    var cropCoords = null;
+
+    canvas.addEventListener("touchstart", function (e) { TouchStart(e); });
+    canvas.addEventListener("touchmove", function (e) { TouchMove(e); });
+    canvas.addEventListener("touchend", function (e) { TouchEnd(e); });
+    canvas.addEventListener("touchcancel", function (e) { TouchEnd(e); });
+
+    function handleSaveCropImage()
+    {
+        var form = new FormData();
+
+        form.append("x1", parseInt(cropCoords.x1));
+        form.append("y1", parseInt(cropCoords.y1));
+        form.append("x2", parseInt(cropCoords.x2));
+        form.append("y2", parseInt(cropCoords.y2));
+        form.append("width", screenWidth);
+        form.append("height", screenHeight);
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.open('POST', '/p2', true);
+        xhr.send(form);
+        xhr.onload = function(){
+            if (xhr.status == 200){ window.location.href = "/p3"; };
+        };
+    }
+
+    function handleButtonPressed()
+    {
+        buttonPressed = !buttonPressed;
+    }
+
+    function TouchStart(e)
+    {
+        e.preventDefault();
+        isDrawing = true;
+        touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+        touchPosition = { x: touchStart.x, y: touchStart.y };
+    }
+
+    function TouchMove(e)
+    {
+        if (isDrawing && buttonPressed) {
+            e.preventDefault();
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.drawImage(img, 0, 0, screenWidth, screenHeight);
+            ctx.rect(touchStart.x, touchStart.y, touchPosition.x - touchStart.x, touchPosition.y - touchStart.y);
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+
+            cropCoords = {
+                x1: touchStart.x,
+                y1: touchStart.y,
+                x2: touchPosition.x,
+                y2: touchPosition.y
+            };
+
+        }
+        touchPosition = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    }
+
+    function TouchEnd(e)
+    {
+        e.preventDefault();
+        isDrawing = false;
+        touchStart = null;
+        touchPosition = null;
+        if (!canCalculate && buttonPressed) {
+            canCalculate = true;
+            calcButton.disabled = false;
+        };
+    }
+</script>
+</body>
+</html>

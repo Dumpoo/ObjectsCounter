@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<div class="container" id="container"></div>
+<p>{{ quantity }}</p>
+</body>
+<script type="text/javascript">
+    const screenWidth = window.innerWidth-50;
+    const screenHeight = window.innerHeight-50;
+
+    var cont = document.getElementById("container");
+    cont.insertAdjacentHTML('afterbegin', `<canvas id="drawingCanvas" width=${screenWidth} height=${screenHeight}></canvas>`);
+
+    const canvas = document.getElementById("drawingCanvas");
+    const ctx = canvas.getContext("2d");
+
+    var img = new Image();
+
+    img.onload = function() {
+        ctx.drawImage(img, 0, 0, screenWidth, screenHeight);
+    };
+
+    img.src = "/{{ image }}";
+</script>
+</html>
